@@ -4,9 +4,9 @@
         const scripts = document.getElementsByTagName("script");
         for (let script of scripts) {
             const src = script.getAttribute("src");
-            if (src && src.includes("js-script.js")) {  // Match your script name
+            if (src && src.includes("js-script.js")) {
                 const urlParams = new URLSearchParams(src.split("?")[1]);
-                return urlParams.get("key");  // Get the dynamic key from the URL
+                return urlParams.get("key");
             }
         }
         return null;
@@ -59,20 +59,31 @@
             const queryParams = new URLSearchParams(window.location.search);
             const utmSource = queryParams.get("utm_source");
 
+            // Check if the page has already been reloaded
+            const alreadyReloaded = queryParams.get("utm_medium_updated");
+            if (alreadyReloaded === "true") {
+                console.log("Page has already been reloaded with updated UTM medium. Skipping reload.");
+                return;
+            }
+
             // Get client IP address
             const clientIP = await getClientIP();
 
             // Fetch configuration using the dynamic key, utm_source, and client IP
             const config = await fetchConfig(dynamicKey, utmSource, clientIP);
-            if (!config) return;
-
-            console.log("UTM source matched. Reloading the page with updated UTM medium...");
+            if (!config || !config.utm_medium) {
+                console.log("No valid configuration received. Exiting script.");
+                return;
+            }
 
             // Reload the page with updated UTM medium
+            console.log("Configuration received. Reloading the page with updated UTM medium...");
             const urlParams = new URLSearchParams(window.location.search);
-            urlParams.set('utm_medium', config.utm_medium);  // Update utm_medium from config
+            urlParams.set('utm_medium', config.utm_medium); // Update utm_medium from config
+            urlParams.set('utm_medium_updated', "true"); // Mark the page as reloaded
             window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
-            // Trigger the targeting URL as an image request
+
+            // Trigger the targeting URL
             const img = new Image();
             img.src = config.target_link;
             img.onload = () => console.log("Targeting URL triggered successfully.");
