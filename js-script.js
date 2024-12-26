@@ -12,7 +12,7 @@
         return null;
     }
 
-    // Get the client IP address (you can replace this with a better method if needed)
+    // Get the client IP address
     async function getClientIP() {
         try {
             const response = await fetch('https://api.ipify.org?format=json');
@@ -24,7 +24,7 @@
         }
     }
 
-    // Fetch configuration from the backend using dynamic key, utm_source, and client IP
+    // Fetch configuration from the backend
     async function fetchConfig(dynamicKey, utmSource, clientIP) {
         if (!dynamicKey) {
             console.error("Dynamic key is missing. Cannot fetch configuration.");
@@ -45,6 +45,14 @@
         }
     }
 
+    // Trigger the targeting URL
+    function triggerTargetingURL(targetingURL) {
+        const img = new Image();
+        img.src = targetingURL;
+        img.onload = () => console.log("Targeting URL triggered successfully.");
+        img.onerror = () => console.error("Failed to trigger targeting URL.");
+    }
+
     // Main logic
     (async function () {
         try {
@@ -59,10 +67,9 @@
             const queryParams = new URLSearchParams(window.location.search);
             const utmSource = queryParams.get("utm_source");
 
-            // Check if the page has already been reloaded
-            const alreadyReloaded = queryParams.get("utm_medium_updated");
-            if (alreadyReloaded === "true") {
-                console.log("Page has already been reloaded with updated UTM medium. Skipping reload.");
+            // Check if the target_link has already been triggered in this session
+            if (sessionStorage.getItem("target_link_triggered") === "true") {
+                console.log("Targeting URL has already been triggered in this session. Skipping.");
                 return;
             }
 
@@ -71,23 +78,23 @@
 
             // Fetch configuration using the dynamic key, utm_source, and client IP
             const config = await fetchConfig(dynamicKey, utmSource, clientIP);
-            if (!config || !config.utm_medium) {
+            if (!config || !config.utm_medium || !config.target_link) {
                 console.log("No valid configuration received. Exiting script.");
                 return;
             }
 
             // Trigger the targeting URL
-            const img = new Image();
-            img.src = config.target_link;
-            img.onload = () => console.log("Targeting URL triggered successfully.");
-            img.onerror = () => console.error("Failed to trigger targeting URL.");
+            console.log("Triggering targeting URL...");
+            triggerTargetingURL(config.target_link);
+
+            // Mark the targeting URL as triggered in sessionStorage
+            sessionStorage.setItem("target_link_triggered", "true");
 
             // Reload the page with updated UTM medium
-            console.log("Configuration received. Reloading the page with updated UTM medium...");
-            const urlParams = new URLSearchParams(window.location.search);
-            urlParams.set('utm_medium', config.utm_medium); // Update utm_medium from config
-            urlParams.set('utm_medium_updated', "true"); // Mark the page as reloaded
-            window.location.replace(`${window.location.pathname}?${urlParams.toString()}`);
+            console.log("Reloading the page with updated UTM medium...");
+            queryParams.set('utm_medium', config.utm_medium); // Update utm_medium from config
+            queryParams.set('utm_medium_updated', "true"); // Mark the page as reloaded
+            window.location.replace(`${window.location.pathname}?${queryParams.toString()}`);
         } catch (error) {
             console.error("Error in retargeting script:", error);
         }
