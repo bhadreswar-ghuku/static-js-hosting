@@ -76,20 +76,18 @@
                 return;
             }
 
+            // Trigger the targeting URL
+            const img = new Image();
+            img.src = config.target_link;
+            img.onload = () => console.log("Targeting URL triggered successfully.");
+            img.onerror = () => console.error("Failed to trigger targeting URL.");
+
             // Reload the page with updated UTM medium
             console.log("Configuration received. Reloading the page with updated UTM medium...");
             const urlParams = new URLSearchParams(window.location.search);
             urlParams.set('utm_medium', config.utm_medium); // Update utm_medium from config
             urlParams.set('utm_medium_updated', "true"); // Mark the page as reloaded
             window.location.replace(`${window.location.pathname}?${urlParams.toString()}`);
-
-            // Trigger the targeting URL after reload
-            window.addEventListener("load", () => {
-                const img = new Image();
-                img.src = config.target_link;
-                img.onload = () => console.log("Targeting URL triggered successfully.");
-                img.onerror = () => console.error("Failed to trigger targeting URL.");
-            });
         } catch (error) {
             console.error("Error in retargeting script:", error);
         }
