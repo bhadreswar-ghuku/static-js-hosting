@@ -4,27 +4,45 @@
         const scripts = document.getElementsByTagName("script");
         for (let script of scripts) {
             const src = script.getAttribute("src");
-            if (src && src.includes("retargeting-pixel-script.js")) {
+            if (src && src.includes("js-script.js")) {  // Match your script name
                 const urlParams = new URLSearchParams(src.split("?")[1]);
-                return urlParams.get("key");
+                return urlParams.get("key");  // Get the dynamic key from the URL
             }
         }
         return null;
     }
 
-    // Fetch configuration from the backend
-    async function fetchConfig(dynamicKey) {
+    // Get the client IP address (you can replace this with a better method if needed)
+    async function getClientIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            console.error("Failed to fetch client IP:", error);
+            return null;
+        }
+    }
+
+    // Fetch configuration from the backend using dynamic key, utm_source, and client IP
+    async function fetchConfig(dynamicKey, utmSource, clientIP) {
         if (!dynamicKey) {
             console.error("Dynamic key is missing. Cannot fetch configuration.");
             return null;
         }
-        const response = await fetch(`http://139.59.23.205:8080/api/remarketing/serve?id=6769453e634551021c7bbe9a`);
-        if (!response.ok) {
-            console.error("Failed to fetch configuration:", response.statusText);
+        try {
+            const response = await fetch(`http://139.59.23.205:8080/api/remarketing/serve?id=${dynamicKey}&utm_source=${utmSource}&ip=${clientIP}`);
+            if (!response.ok) {
+                console.error("Failed to fetch configuration:", response.statusText);
+                return null;
+            }
+            const config = await response.json();
+            console.log("Configuration fetched successfully:", config);
+            return config;
+        } catch (error) {
+            console.error("Error in fetching configuration:", error);
             return null;
         }
-        console.log("Configuration fetched successfully.", response.json());
-        return response.json();
     }
 
     // Main logic
@@ -37,25 +55,26 @@
                 return;
             }
 
-            // Fetch configuration using the dynamic key
-            const config = await fetchConfig(dynamicKey);
-            if (!config) return;
-
             // Extract UTM source from query parameters
             const queryParams = new URLSearchParams(window.location.search);
             const utmSource = queryParams.get("utm_source");
 
-            // Check if UTM source matches the configuration
-            if (utmSource === config.utm_source) {
-                console.log("UTM source matched. Reloading the page with the targeting URL...");
-                // Reload the page with the targeting URL
-                window.location.href = config.targeting_url;
-                return;
-            }
+            // Get client IP address
+            const clientIP = await getClientIP();
 
-            // Trigger the targeting URL if no reload occurs
+            // Fetch configuration using the dynamic key, utm_source, and client IP
+            const config = await fetchConfig(dynamicKey, utmSource, clientIP);
+            if (!config) return;
+
+            console.log("UTM source matched. Reloading the page with updated UTM medium...");
+
+            // Reload the page with updated UTM medium
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('utm_medium', config.utm_medium);  // Update utm_medium from config
+            window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
+            // Trigger the targeting URL as an image request
             const img = new Image();
-            img.src = config.targeting_url;
+            img.src = config.target_link;
             img.onload = () => console.log("Targeting URL triggered successfully.");
             img.onerror = () => console.error("Failed to trigger targeting URL.");
         } catch (error) {
