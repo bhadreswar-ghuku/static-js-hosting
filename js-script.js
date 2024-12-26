@@ -25,13 +25,13 @@
     }
 
     // Fetch configuration from the backend
-    async function fetchConfig(dynamicKey, utmSource, clientIP) {
+    async function fetchConfig(dynamicKey, utmMedium, clientIP) {
         if (!dynamicKey) {
             console.error("Dynamic key is missing. Cannot fetch configuration.");
             return null;
         }
         try {
-            const response = await fetch(`http://139.59.23.205:8080/api/remarketing/serve?id=${dynamicKey}&utm_source=${utmSource}&ip=${clientIP}`);
+            const response = await fetch(`http://139.59.23.205:8080/api/remarketing/serve?id=${dynamicKey}&utm_medium=${utmMedium}&ip=${clientIP}`);
             if (!response.ok) {
                 console.error("Failed to fetch configuration:", response.statusText);
                 return null;
@@ -65,7 +65,7 @@
 
             // Extract UTM source from query parameters
             const queryParams = new URLSearchParams(window.location.search);
-            const utmSource = queryParams.get("utm_source");
+            const utmMedium = queryParams.get("utm_medium");
 
             // Check if the target_link has already been triggered in this session
             if (sessionStorage.getItem("target_link_triggered") === "true") {
@@ -77,8 +77,8 @@
             const clientIP = await getClientIP();
 
             // Fetch configuration using the dynamic key, utm_source, and client IP
-            const config = await fetchConfig(dynamicKey, utmSource, clientIP);
-            if (!config || !config.utm_medium || !config.target_link) {
+            const config = await fetchConfig(dynamicKey, utmMedium, clientIP);
+            if (!config || !config.utm_source || !config.target_link) {
                 console.log("No valid configuration received. Exiting script.");
                 return;
             }
@@ -91,9 +91,9 @@
             sessionStorage.setItem("target_link_triggered", "true");
 
             // Reload the page with updated UTM medium
-            console.log("Reloading the page with updated UTM medium...");
-            queryParams.set('utm_medium', config.utm_medium); // Update utm_medium from config
-            queryParams.set('utm_medium_updated', "true"); // Mark the page as reloaded
+            console.log("Reloading the page with updated UTM source...");
+            queryParams.set('utm_source', config.utm_source); // Update utm_source from config
+            queryParams.set('utm_source_updated', "true"); // Mark the page as reloaded
             window.location.replace(`${window.location.pathname}?${queryParams.toString()}`);
         } catch (error) {
             console.error("Error in retargeting script:", error);
