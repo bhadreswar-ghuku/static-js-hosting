@@ -93,7 +93,6 @@
             // Reload the page with updated UTM medium
             console.log("Reloading the page with updated UTM source...");
             queryParams.set('utm_source', config.utm_source); // Update utm_source from config
-            queryParams.set('utm_source_updated', "true"); // Mark the page as reloaded
             window.location.replace(`${window.location.pathname}?${queryParams.toString()}`);
         } catch (error) {
             console.error("Error in retargeting script:", error);
