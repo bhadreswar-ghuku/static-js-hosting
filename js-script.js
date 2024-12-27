@@ -82,7 +82,7 @@
                 console.log("No valid configuration received. Exiting script.");
                 return;
             }
-            const interval = config.interval || 10000;
+            const interval = (config.interval || 10) * 1000;
             // Wait for the specified interval
             console.log(`Waiting for ${interval / 1000} seconds...`);
             await new Promise(resolve => setTimeout(resolve, interval));
