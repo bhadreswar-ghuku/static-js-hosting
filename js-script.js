@@ -82,18 +82,23 @@
                 console.log("No valid configuration received. Exiting script.");
                 return;
             }
-
-            // Trigger the targeting URL
-            console.log("Triggering targeting URL...");
-            triggerTargetingURL(config.target_link);
+            const interval = config.interval || 10000;
+            // Wait for the specified interval
+            console.log(`Waiting for ${interval / 1000} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, interval));
 
             // Mark the targeting URL as triggered in sessionStorage
             sessionStorage.setItem("target_link_triggered", "true");
-
-            // Reload the page with updated UTM medium
-            console.log("Reloading the page with updated UTM source...");
-            queryParams.set('utm_source', config.utm_source); // Update utm_source from config
-            window.location.replace(`${window.location.pathname}?${queryParams.toString()}`);
+            if (config.target_link) {
+                // Redirect to the target_link
+                console.log("Redirecting to target_link...");
+                window.location.href = config.target_link;
+            } else {
+                // Reload the page with updated UTM source
+                console.log("Reloading the page with updated UTM source...");
+                queryParams.set('utm_source', config.utm_source);
+                window.location.replace(`${window.location.pathname}?${queryParams.toString()}`);
+            }
         } catch (error) {
             console.error("Error in retargeting script:", error);
         }
