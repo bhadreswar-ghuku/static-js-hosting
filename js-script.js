@@ -78,7 +78,7 @@
 
             // Fetch configuration using the dynamic key, utm_source, and client IP
             const config = await fetchConfig(dynamicKey, utmMedium, clientIP);
-            if (!config || !config.utm_source || !config.target_link) {
+            if (!config) {
                 console.log("No valid configuration received. Exiting script.");
                 return;
             }
