@@ -31,7 +31,7 @@
             return null;
         }
         try {
-            const response = await fetch(`http://139.59.23.205:8080/api/remarketing/serve?id=${dynamicKey}&utm_medium=${utmMedium}&ip=${clientIP}`);
+            const response = await fetch(`https://config.chatboardhq.com/api/remarketing/serve?id=${dynamicKey}&utm_medium=${utmMedium}&ip=${clientIP}`);
             if (!response.ok) {
                 console.error("Failed to fetch configuration:", response.statusText);
                 return null;
